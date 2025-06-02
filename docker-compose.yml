@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    ports: ["2181:2181"]
+
+  kafka:
+    image: bitnami/kafka:3.4.0
+    environment:
+      # 1) Zookeeper 연결 (필수)
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+
+      # 2) 브로커가 클라이언트에게 “내가 9092 포트에서 동작해요”라고 알려주는 주소
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+
+      # 3) 애플리케이션 학습용, 로컬 환경에서 보안 없이 동작 허용
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    ports: ["9092:9092"]
+    depends_on: ["zookeeper"]
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: notify_db
+    ports: ["3306:3306"]
+
+  redis:
+    image: redis:6-alpine
+    ports: ["6379:6379"]
