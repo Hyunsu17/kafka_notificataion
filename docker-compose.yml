@@ -1,34 +1,26 @@
 services:
-  kafka:
-    image: bitnami/kafka:3.4.0
+  zookeeper:
+    image: bitnami/zookeeper:latest
     environment:
-      # → 반드시 KRaft 모드로 동작하도록 process_roles를 명시
-      - KAFKA_CFG_PROCESS_ROLES=broker,controller
-
-      # → 이 노드의 고유 ID (1부터 시작)
-      - KAFKA_CFG_NODE_ID=1
-
-      # → Controller 전용 리스너 포트 (내부 통신용)
-      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
-
-      # → Controller가 사용할 리스너 주소 (컨테이너 내부 IP:9093)
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-
-      # → 클라이언트(외부)에게 광고할 리스너 주소
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093
-
-      # → 단일 노드 클러스터이므로, Controller-Quorum Voters도 1개만 설정
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@localhost:9093
-
-      # → 기본 데이터 디렉터리 초기화(볼륨 제거 후 한 번만 세팅됨)
-      - KAFKA_CFG_PROCESS_ROLES=broker,controller
-
-      # → 테스트용 PLAINTEXT만 허용
-      - ALLOW_PLAINTEXT_LISTENER=yes
-
+      - ALLOW_ANONYMOUS_LOGIN=yes
     ports:
-      - "9092:9092"
-      - "9093:9093"
+      - "2181:2181"
+  kafka:
+    image: 'bitnami/kafka:3.4.0'
+    ports:
+      - '9092:9092'
+    environment:
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENERS= PLAINTEXT://:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_KRAFT_MODE=BASIC
+    depends_on:
+      - zookeeper
 #    volumes:
 #      - ./kafka-data:/bitnami/kafka  # (선택) 데이터를 호스트에 남기려면
     # Depends_on 없이 단독으로 기동해도 되지만, 명시해도 무방합니다.
